@@ -60,3 +60,12 @@ export async function updateInvoice(invoiceId: string, formData: FormData) {
 
     redirect('/dashboard/invoices');
 }
+
+export async function deleteInvoice(invoiceId:string) {
+    console.log(`deleteInvoice server action. invoiceId=${invoiceId}`);
+
+    await sql`DELETE FROM invoices WHERE id = ${invoiceId}`;
+    
+    revalidatePath('/dashboard/invoices');  // invlidate the client cache and reload the invoice table
+    // Note: This function is called from the invoices dashboard page itself, so there is no need to redirect to the page again
+}
