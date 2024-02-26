@@ -14,13 +14,13 @@ const FormSchema = z.object({
 
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
 
-export default async function createInvoice(formData: FormData) {
+export async function createInvoice(formData: FormData) {
     const rawFormData = {
         customerId: formData.get('customerId'),
         amount: formData.get('amount'),
         status: formData.get('status')
     }
-    console.log(rawFormData); // logged in the server log
+    console.log(`createInvoice server action. rawFormData: ${rawFormData}`); // logged in the server log
 
     const { customerId, amount, status } = CreateInvoice.parse(rawFormData);
     const amountInCents = amount * 100;
@@ -32,6 +32,31 @@ export default async function createInvoice(formData: FormData) {
     `;
     console.log('new invoice written to db');
 
-    revalidatePath('/dashboard/invoices');
+    revalidatePath('/dashboard/invoices'); // revalidate client cache and make a new server request
+    redirect('/dashboard/invoices');
+}
+
+const UpdateInvoice = FormSchema.omit({ id: true, date: true });
+
+export async function updateInvoice(invoiceId: string, formData: FormData) {
+
+    const { customerId, amount, status } = UpdateInvoice.parse({
+        customerId: formData.get('customerId'),
+        amount: formData.get('amount'),
+        status: formData.get('status')
+    });
+    const amountInCents = amount * 100;
+    console.log(`updateInvoice server action. invoiceId=${invoiceId}, customerId=${customerId}, amount=${amount}, status=${status}`);
+
+    await sql`
+        UPDATE invoices
+        SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
+        WHERE id = ${invoiceId}
+    `;
+    console.log('invoice updated in db');
+
+    revalidatePath(`/dashboard/invoices/${invoiceId}/edit`); // revalidate client cache of invoice edit page and make a new server request
+    revalidatePath('/dashboard/invoices');  // revalidate client cache of invoices main page and make a new server request
+
     redirect('/dashboard/invoices');
 }
