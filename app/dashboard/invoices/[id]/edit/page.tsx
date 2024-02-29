@@ -1,5 +1,6 @@
 import { fetchCustomers, fetchInvoiceById } from "@/app/lib/data";
 import EditInvoiceForm from "@/app/ui/invoices/edit-form";
+import { notFound } from "next/navigation";
 
 export default async function Page({
     params
@@ -16,6 +17,10 @@ export default async function Page({
         fetchCustomers()
     ])
 
+    if(!invoice) {
+        console.error(`Not found invoice with id ${invoiceId}`);
+        notFound();
+    }
     return (
         <EditInvoiceForm invoice={invoice} customers={customers} />
     );
